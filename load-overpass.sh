@@ -21,10 +21,6 @@ CURL_BIN=curl
 JQ_BIN=jq
 GZIP_BIN=gzip
 
-# Overpass query
-
-QUERY="[out:json][timeout:$TIMEOUT_SECONDS]; ( node[amenity=charging_station]; area[amenity=charging_station]; relation[amenity=charging_station]; ); out meta qt;"
-
 # Helper functions
 
 function log() { echo -e "\e[32m$1\e[0m"; }
@@ -34,7 +30,7 @@ function loge() { echo -e "\e[31m$1\e[0m"; }
 
 log "1: Downloading data through Overpass API (this may take up to $TIMEOUT_SECONDS seconds...)"
 $CURL_BIN \
-    --data "$QUERY" \
+    --data "[out:json][timeout:$TIMEOUT_SECONDS]; node[amenity=charging_station]; out meta qt;" \
     --header 'content-type: text/plain' \
     -o $OUTFILE_RAW \
     $OVERPASS_INTERPRETER
@@ -53,7 +49,7 @@ $JQ_BIN "{
     timestamp: now,
     count: $found_elements,
     elements: [
-        .elements[] | {id,lat,lon,timestamp,type,version,user,tags}
+        .elements[] | {id,lat,lon,timestamp,version,user,tags}
     ]
 }"  $OUTFILE_RAW | $GZIP_BIN -9 > $OUTFILE_COMPRESSED
 size_compressed=$(du -h $OUTFILE_COMPRESSED | cut -f1)
